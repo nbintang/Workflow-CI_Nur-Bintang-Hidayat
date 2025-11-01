@@ -10,11 +10,10 @@ import mlflow.sklearn # type: ignore
 from sklearn.model_selection import train_test_split # type: ignore
 from sklearn.ensemble import RandomForestRegressor # type: ignore
 from sklearn.metrics import mean_squared_error, r2_score, mean_absolute_error # type: ignore
-from config import (
+from model_config import (
     feature_cols,
     target_col,
-    experiment_name,
-    model_autolog_name,
+    model_type,
     dataset_path
 )
 
@@ -35,40 +34,47 @@ def main():
     )
     print(f"✅ Data split: Train={X_train.shape}, Test={X_test.shape}")
     
+    # 3. Enable autolog untuk Scikit-learn
+    mlflow.sklearn.autolog(log_input_examples=True, log_model_signatures=True)
     
-    # 3. Setup MLflow
-    mlflow.set_experiment(experiment_name)
+    # 4. Training model (tanpa with mlflow.start_run karena sudah di-handle oleh mlflow run)
+    print("\n🔧 Training Random Forest model...")
     
-    # 4. Enable autolog untuk Scikit-learn
-    mlflow.sklearn.autolog()
+    # Inisialisasi dan training model
+    model = RandomForestRegressor(
+        n_estimators=100,
+        max_depth=10,
+        random_state=42
+    )
+    model.fit(X_train, y_train)
     
-    # 5. Training model
-    with mlflow.start_run(run_name=model_autolog_name):
-        print("\n🔧 Training Random Forest model...")
-        
-        # Inisialisasi dan training model
-        model = RandomForestRegressor(
-            n_estimators=100,
-            max_depth=10,
-            random_state=42
-        )
-        model.fit(X_train, y_train)
-        
-        # Prediksi
-        y_pred = model.predict(X_test)
-        
-        # Evaluasi (autolog akan mencatat ini otomatis)
-        mse = mean_squared_error(y_test, y_pred)
-        r2 = r2_score(y_test, y_pred)
-        mae = mean_absolute_error(y_test, y_pred)
-        
-        print(f"\n📊 Hasil Evaluasi:")
-        print(f"   MSE: {mse:.4f}")
-        print(f"   R2 Score: {r2:.4f}")
-        print(f"   MAE: {mae:.4f}")
-        
-        print("\n✅ Model berhasil dilatih dan disimpan di MLflow!")
-        print("💡 Jalankan 'mlflow ui' untuk melihat dashboard")
+    # Prediksi
+    y_pred = model.predict(X_test)
+    
+    # Evaluasi
+    mse = mean_squared_error(y_test, y_pred)
+    r2 = r2_score(y_test, y_pred)
+    mae = mean_absolute_error(y_test, y_pred)
+    
+    # Log metrics manually
+    mlflow.log_metric("mse", mse)
+    mlflow.log_metric("r2_score", r2)
+    mlflow.log_metric("mae", mae)
+    
+    # Log additional params
+    mlflow.log_param("test_size", 0.2)
+    mlflow.log_param("random_state", 42)
+    
+    # Add tags
+    mlflow.set_tag("model_type", model_type)
+    mlflow.set_tag("training_env", "GitHub Actions")
+    
+    print(f"\n📊 Hasil Evaluasi:")
+    print(f"   MSE: {mse:.4f}")
+    print(f"   R2 Score: {r2:.4f}")
+    print(f"   MAE: {mae:.4f}")
+    
+    print("\n✅ Model berhasil dilatih dan disimpan di MLflow!")
 
 if __name__ == "__main__":
     main()

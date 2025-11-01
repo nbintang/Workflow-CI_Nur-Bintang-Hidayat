@@ -13,11 +13,11 @@ from sklearn.ensemble import RandomForestRegressor # type: ignore
 from modelling_tuning_logger import manual_log_metrics
 from dotenv import load_dotenv
 load_dotenv()
-from config import (
+from model_config import (
     dagshub_repo_owner,
     dagshub_repo_name,
     dagshub_token,
-    model_tuning_type,
+    model_type,
     model_tuning_storage,
     feature_cols,
     target_col,
@@ -79,7 +79,7 @@ def train_with_dagshub():
         for param, value in grid_search.best_params_.items():
             mlflow.log_param(param, value)
 
-        mlflow.log_param("model_type", model_tuning_type)
+        mlflow.log_param("model_type", model_type)
         mlflow.log_param("storage", model_tuning_storage)
 
         # Prediksi
