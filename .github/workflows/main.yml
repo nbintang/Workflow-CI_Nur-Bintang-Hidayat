@@ -21,16 +21,28 @@ jobs:
         with:
           environment-file: MLProject/conda.yaml
           activate-environment: mlflow-env
+          auto-activate-base: false
 
-      - name: Install MLflow
-        run: pip install --upgrade mlflow
+      - name: Verify Conda Environment
+        shell: bash -l {0}
+        run: |
+          conda info
+          conda list
+          echo "✅ Conda environment ready"
+
+      - name: Clean MLflow Directory
+        shell: bash -l {0}
+        run: |
+          echo "🧹 Cleaning old MLflow runs..."
+          rm -rf mlruns/
+          rm -rf mlartifacts/
+          rm -rf MLProject/mlruns/
+          rm -rf MLProject/mlartifacts/
+          echo "✅ MLflow directory cleaned"
 
       - name: Run MLflow Project
+        shell: bash -l {0}
         run: |
-              cd MLProject
-              conda init bash
-              source ~/.bashrc
-              echo "🚀 Running MLflow project..."
-              mlflow run . -P data_path="IEA_Global_EV_Data_2024_cleaned.csv"
-              cd ..
-         
+          cd MLProject
+          echo "🚀 Running MLflow project..."
+          mlflow run . -P data_path="../preprocessed/IEA_Global_EV_Data_2024_cleaned.csv"
