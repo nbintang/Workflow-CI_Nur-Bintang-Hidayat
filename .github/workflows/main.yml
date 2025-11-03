@@ -30,19 +30,31 @@ jobs:
           conda list
           echo "✅ Conda environment ready"
 
-      - name: Clean MLflow Directory
+      - name: Ensure dataset exists
         shell: bash -l {0}
         run: |
-          echo "🧹 Cleaning old MLflow runs..."
-          rm -rf mlruns/
-          rm -rf mlartifacts/
-          rm -rf MLProject/mlruns/
-          rm -rf MLProject/mlartifacts/
-          echo "✅ MLflow directory cleaned"
+          echo "📂 Checking dataset file..."
+          if [ ! -f "MLProject/IEA_Global_EV_Data_2024_cleaned.csv" ]; then
+            echo "❌ Dataset not found! Please add IEA_Global_EV_Data_2024_cleaned.csv to MLProject/"
+            exit 1
+          fi
+          echo "✅ Dataset found"
 
-      - name: Run MLflow Project
+      - name: Install MLflow (if not in env)
+        shell: bash -l {0}
+        run: |
+          pip install --upgrade mlflow
+
+      - name: Run MLflow Project (Training)
         shell: bash -l {0}
         run: |
           cd MLProject
           echo "🚀 Running MLflow project..."
           mlflow run . -P data_path="IEA_Global_EV_Data_2024_cleaned.csv"
+          echo "✅ Model trained successfully"
+
+      - name: Show MLflow Run Summary
+        shell: bash -l {0}
+        run: |
+          echo "📊 Listing MLflow runs..."
+          ls -R MLProject/mlruns || echo "⚠️ No mlruns directory found!"
